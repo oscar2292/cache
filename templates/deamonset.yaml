@@ -1,81 +1,86 @@
-apiVersion: extensions/v1beta1
+---
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ template "nodelocaldns.fullname" . }}
+  name: node-local-dns
+  namespace: kube-system
   labels:
-    app: "{{ template "nodelocaldns.fullname" . }}"
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}"
-    release: {{ .Release.Name | quote }}
-    heritage: {{ .Release.Service | quote }}
+    k8s-app: node-local-dns
+    kubernetes.io/cluster-service: "true"
+    addonmanager.kubernetes.io/mode: Reconcile
 spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 10%
+  selector:
+    matchLabels:
+      k8s-app: node-local-dns
   template:
     metadata:
       labels:
-        app: {{ template "nodelocaldns.fullname" . }}
-      name: {{ template "nodelocaldns.fullname" . }}
+        k8s-app: node-local-dns
       annotations:
-        checksum/configmaps: {{ tpl (toYaml .Values.configMaps) . | sha256sum }}
-        checksum/secrets: {{ tpl (toYaml .Values.secrets) . | sha256sum }}
-      {{- if .Values.podAnnotations }}
-{{ toYaml .Values.podAnnotations | indent 8 }}
-      {{- end }}
+        prometheus.io/port: "9253"
+        prometheus.io/scrape: "true"
     spec:
-      terminationGracePeriodSeconds: 1
-      {{- if .Values.useHostNetwork }}
-      hostNetwork: {{ .Values.useHostNetwork }}
+      priorityClassName: system-node-critical
+      serviceAccountName: node-local-dns
+      hostNetwork: true
       dnsPolicy: Default  # Don't use cluster DNS.
-      {{- end }}
-      {{- if .Values.useHostPID }}
-      hostPID: {{ .Values.useHostPID }}
-      {{- end }}
-      {{- if .Values.image.pullSecrets }}
-      imagePullSecrets:
-{{ toYaml .Values.image.pullSecrets | indent 8 }}
-      {{- end }}
-      {{- if .Values.priorityClassName }}
-      priorityClassName: {{ .Values.priorityClassName }}
-      {{- end }}
-      containers:
-      - name: {{ default .Chart.Name .Values.name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        args: [ "-localip", "{{ .Values.localIp }}", "-conf", "/etc/coredns/Corefile" ]
-        {{- if .Values.securityContext }}
-        securityContext:
- {{ toYaml .Values.securityContext | indent 12 }}
-        {{- end }}
-        resources:
-{{ toYaml .Values.resources | indent 12 }}
-{{- if .Values.env }}
-        env:
-{{ include "nodelocaldns.env" . | indent 10 }}
-{{- end}}
-        volumeMounts:
-{{ include "nodelocaldns.files.volumeMounts" . | indent 8 }}
-{{ toYaml .Values.volumeMounts | indent 8 }}
-{{- if .Values.livenessProbe }}
-        livenessProbe:
-{{ toYaml .Values.livenessProbe | indent 10 }}
-{{- end }}
-{{- if .Values.readinessProbe }}
-        readinessProbe:
-{{ toYaml .Values.readinessProbe | indent 10 }}
-{{- end }}
-      volumes:
-{{ include "nodelocaldns.files.volumes" . | indent 6 }}
-{{ toYaml .Values.volumes | indent 6 }}
-      {{- if .Values.tolerations }}
       tolerations:
-{{ toYaml .Values.tolerations | indent 8 }}
-      {{- end }}
-      {{- if .Values.affinity }}
-      affinity:
-{{ toYaml .Values.affinity | indent 8 }}
-      {{- end }}
-      serviceAccountName: {{ if .Values.rbac.create }}{{ template "nodelocaldns.fullname" . }}{{ else }}"{{ .Values.rbac.serviceAccountName }}"{{ end }}
-      {{- if .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-      {{- end }}
-  updateStrategy:
-{{ toYaml .Values.updateStrategy | indent 4 }}
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - effect: "NoExecute"
+        operator: "Exists"
+      - effect: "NoSchedule"
+        operator: "Exists"
+      containers:
+      - name: node-cache
+        image: k8s.gcr.io/dns/k8s-dns-node-cache:1.17.0
+        resources:
+          requests:
+            cpu: 25m
+            memory: 5Mi
+        args: [ "-localip", "__PILLAR__LOCAL__DNS__,__PILLAR__DNS__SERVER__", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 53
+          name: dns
+          protocol: UDP
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 9253
+          name: metrics
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            host: 169.254.20.10
+            path: /health
+            port: 8080
+          initialDelaySeconds: 60
+          timeoutSeconds: 5
+        volumeMounts:
+        - mountPath: /run/xtables.lock
+          name: xtables-lock
+          readOnly: false
+        - name: config-volume
+          mountPath: /etc/coredns
+        - name: kube-dns-config
+          mountPath: /etc/kube-dns
+      volumes:
+      - name: xtables-lock
+        hostPath:
+          path: /run/xtables.lock
+          type: FileOrCreate
+      - name: kube-dns-config
+        configMap:
+          name: kube-dns
+          optional: true
+      - name: config-volume
+        configMap:
+          name: node-local-dns
+          items:
+            - key: Corefile
+              path: Corefile.base
