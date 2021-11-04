@@ -1,43 +1,73 @@
-# Default values for nodelocal-dns-cache.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-replicaCount: 1
-
+---
 image:
   repository: k8s.gcr.io/k8s-dns-node-cache
-  tag: 1.15.2
   pullPolicy: IfNotPresent
+  tag: 1.15.13
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+
+config:
+  clusterDomain: cluster.local
+  localDnsIp: 169.254.20.10
+  kubeDnsSvcIp: 10.96.0.10
+  nodeLocalSvcIp: __PILLAR__CLUSTER__DNS__   # random IP, could be changed to static
+  upstreamDns: __PILLAR__UPSTREAM__SERVERS__ # defaults to /etc/resolv.conf
+  upstreamDnsUseTcp: false
+
+useHostNetwork: true
 
 service:
   type: ClusterIP
-  port: 80
+  udpPort: 53
+  tcpPort: 53
+  upstreamSelector:
+    k8s-app: kube-dns
 
-ingress:
-  enabled: false
+updateStrategy:
+  rollingUpdate:
+    maxUnavailable: 10%
 
-dnsDomain: cluster.local # this is default for eks
-localDns: 169.254.20.10
-dnsServer: 10.96.0.10 # set to kube-dns service ip
+priorityClassName: system-node-critical
+podAnnotations: {}
+podSecurityContext: {}
 
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+securityContext:
+  privileged: true
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 5
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 10
+  timeoutSeconds: 5
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
 
 nodeSelector: {}
-
-tolerations: []
-
 affinity: {}
+
+tolerations:
+  - key: CriticalAddonsOnly
+    operator: Exists
+  - effect: NoExecute
+    operator: Exists
+  - effect: NoSchedule
+    operator: Exists
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 5Mi
+  limits:
+    cpu: 50m
+    memory: 20Mi

@@ -1,66 +1,72 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: node-local-dns
-  namespace: kube-system
+  name: {{ include "node-local-dns.fullname" . }}
   labels:
-    addonmanager.kubernetes.io/mode: Reconcile
-{{ include "nodelocal-dns-cache.labels" . | indent 4 }}
+    {{- include "node-local-dns.labels" . | nindent 4 }}
 data:
   Corefile: |
-   {{ .Values.dnsDomain }}:53 {
-        errors
-        cache {
-                success 9984 30
-                denial 9984 5
-        }
-        reload
-        loop
-        bind {{ .Values.localDns }}
-        forward . {{ .Values.dnsServer }} {
-                force_tcp
-        }
-        prometheus :9253
-        health {{ .Values.localDns }}:8080
-        }
+    {{ .Values.config.clusterDomain }}:53 {
+      errors
+      cache {
+        success 9984 30
+        denial 9984 5
+      }
+      reload
+      loop
+      bind {{ .Values.config.localDnsIp }} {{ .Values.config.kubeDnsSvcIp }}
+      {{- if .Values.config.upstreamDnsUseTcp }}
+      forward . {{ .Values.config.nodeLocalSvcIp }} {
+        force_tcp
+      }
+      {{ else }}
+      forward . {{ .Values.config.nodeLocalSvcIp }}
+      {{- end }}
+      prometheus :9253
+      health :8080
+    }
     in-addr.arpa:53 {
-        errors
-        cache 30
-        reload
-        loop
-        bind {{ .Values.localDns }}
-        forward . {{ .Values.dnsServer }} {
-                force_tcp
-        }
-        prometheus :9253
-        }
+      errors
+      cache 30
+      reload
+      loop
+      bind {{ .Values.config.localDnsIp }} {{ .Values.config.kubeDnsSvcIp }}
+      {{- if .Values.config.upstreamDnsUseTcp }}
+      forward . {{ .Values.config.nodeLocalSvcIp }} {
+        force_tcp
+      }
+      {{ else }}
+      forward . {{ .Values.config.nodeLocalSvcIp }}
+      {{- end }}
+      prometheus :9253
+    }
     ip6.arpa:53 {
-        errors
-        cache 30
-        reload
-        loop
-        bind {{ .Values.localDns }}
-        forward . {{ .Values.dnsServer }} {
-                force_tcp
-        }
-        prometheus :9253
-        }
+      errors
+      cache 30
+      reload
+      loop
+      bind {{ .Values.config.localDnsIp }} {{ .Values.config.kubeDnsSvcIp }}
+      {{- if .Values.config.upstreamDnsUseTcp }}
+      forward . {{ .Values.config.nodeLocalSvcIp }} {
+        force_tcp
+      }
+      {{ else }}
+      forward . {{ .Values.config.nodeLocalSvcIp }}
+      {{- end }}
+      prometheus :9253
+    }
     .:53 {
-        errors
-        cache 30
-        reload
-        loop
-        bind {{ .Values.localDns }}
-        forward . /etc/resolv.conf {
-                force_tcp
-        }
-        prometheus :9253
-        }
-{{- if .Values.consulIP }}
-    consul {
-       errors
-       cache 30
-       bind {{ .Values.localDns }}
-       forward . {{ .Values.consulIP }}
-       }
-{{- end }}
+      errors
+      cache 30
+      reload
+      loop
+      bind {{ .Values.config.localDnsIp }} {{ .Values.config.kubeDnsSvcIp }}
+      {{- if .Values.config.upstreamDnsUseTcp }}
+      forward . {{ .Values.config.upstreamDns }} {
+        force_tcp
+      }
+      {{ else }}
+      forward . {{ .Values.config.upstreamDns }}
+      {{- end }}
+      prometheus :9253
+    }
