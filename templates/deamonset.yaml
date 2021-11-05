@@ -38,7 +38,7 @@ spec:
           requests:
             cpu: 25m
             memory: 5Mi
-        args: [ "-localip", " {{ .Values.localIp }} , {{ .Values.dnsServer }} ", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
+        args: [ "-localip", "{{ .Values.localIp }} , {{ .Values.dnsServer }}", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
         securityContext:
           privileged: true
         ports:
