@@ -15,19 +15,19 @@ data:
         }
         reload
         loop
-        bind 169.254.20.10 10.96.0.10
+        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
                 force_tcp
         }
         prometheus :9253
-        health 169.254.20.10:8080
+        health {{ .Values.localIp }}:8080
         }
     in-addr.arpa:53 {
         errors
         cache 30
         reload
         loop
-        bind 169.254.20.10 10.96.0.10
+        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
                 force_tcp
         }
@@ -38,7 +38,7 @@ data:
         cache 30
         reload
         loop
-        bind 169.254.20.10 10.96.0.10
+        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
                 force_tcp
         }
@@ -49,7 +49,7 @@ data:
         cache 30
         reload
         loop
-        bind 169.254.20.10 10.96.0.10
+        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
         forward . __PILLAR__UPSTREAM__SERVERS__
         prometheus :9253
         }
