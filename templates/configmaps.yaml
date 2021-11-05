@@ -7,7 +7,7 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
 data:
   Corefile: |
-    {{ .Values.dnsDomain }}:53 {
+    {{ .Values.dns-cache.dnsDomain }}:53 {
         errors
         cache {
                 success 9984 30
@@ -15,18 +15,18 @@ data:
         }
         reload
         loop
-        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
+        bind {{ .Values.dns-cache.localIp }} {{ .Values.dns-cache.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
                 force_tcp
         }
-        health {{ .Values.localIp }}:8080
+        health {{ .Values.dns-cache.localIp }}:8080
         }
     in-addr.arpa:53 {
         errors
         cache 30
         reload
         loop
-        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
+        bind {{ .Values.dns-cache.localIp }} {{ .Values.dns-cache.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
                 force_tcp
         }
@@ -36,7 +36,7 @@ data:
         cache 30
         reload
         loop
-        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
+        bind {{ .Values.dns-cache.localIp }} {{ .Values.dns-cache.dnsServer }}
         forward . __PILLAR__CLUSTER__DNS__ {
                 force_tcp
         }
@@ -46,6 +46,6 @@ data:
         cache 30
         reload
         loop
-        bind {{ .Values.localIp }} {{ .Values.dnsServer }}
+        bind {{ .Values.dns-cache.localIp }} {{ .Values.dns-cache.dnsServer }}
         forward . __PILLAR__UPSTREAM__SERVERS__
         }

@@ -10,7 +10,7 @@ metadata:
     addonmanager.kubernetes.io/mode: Reconcile
 spec:
   updateStrategy:
-    {{- toYaml .Values.updateStrategy | nindent 4 }}
+    {{- toYaml .Values.dns-cache.updateStrategy | nindent 4 }}
   selector:
     matchLabels:
       k8s-app: node-local-dns
@@ -19,22 +19,22 @@ spec:
       labels:
         k8s-app: node-local-dns
     spec:
-      priorityClassName: {{ .Values.priorityClassName }}
+      priorityClassName: {{ .Values.dns-cache.priorityClassName }}
       serviceAccountName: node-local-dns
-      hostNetwork: {{ .Values.useHostNetwork }}
+      hostNetwork: {{ .Values.dns-cache.useHostNetwork }}
       dnsPolicy: Default  # Don't use cluster DNS.
       tolerations:
-        {{- toYaml .Values.tolerations | nindent 8 }}
+        {{- toYaml .Values.dns-cache.tolerations | nindent 8 }}
       containers:
       - name: {{ .Values.name }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.dns-cache.image.repository }}:{{ .Values.dns-cache.image.tag }}"
         resources:
           requests:
             cpu: 25m
             memory: 5Mi
-        args: [ "-localip", "{{ .Values.localIp }},{{ .Values.dnsServer }}", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
+        args: [ "-localip", "{{ .Values.dns-cache.localIp }},{{ .Values.dns-cache.dnsServer }}", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
         securityContext:
-          {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- toYaml .Values.dns-cache.securityContext | nindent 12 }}
         ports:
         - containerPort: 53
           name: dns
