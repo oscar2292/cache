@@ -19,9 +19,6 @@ spec:
     metadata:
       labels:
         k8s-app: node-local-dns
-      annotations:
-        prometheus.io/port: "9253"
-        prometheus.io/scrape: "true"
     spec:
       priorityClassName: system-node-critical
       serviceAccountName: node-local-dns
@@ -36,12 +33,12 @@ spec:
         operator: "Exists"
       containers:
       - name: node-cache
-        image: k8s.gcr.io/dns/k8s-dns-node-cache:1.17.0
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }"
         resources:
           requests:
             cpu: 25m
             memory: 5Mi
-        args: [ "-localip", "169.254.20.10,10.96.0.10", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
+        args: [ "-localip", " {{ .Values.localIp }} , {{ .Values.dnsServer }} ", "-conf", "/etc/Corefile", "-upstreamsvc", "kube-dns-upstream" ]
         securityContext:
           privileged: true
         ports:
