@@ -2,10 +2,10 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "node-local-dns.fullname" . }}
+  name: node-local-dns
   namespace: kube-system
   labels:
-    k8s-app: {{ include "node-local-dns.fullname" . }}
+    k8s-app: node-local-dns
     kubernetes.io/cluster-service: "true"
     addonmanager.kubernetes.io/mode: Reconcile
 spec:
@@ -13,14 +13,14 @@ spec:
     {{- toYaml .Values.updateStrategy | nindent 4 }}
   selector:
     matchLabels:
-      k8s-app: {{ include "node-local-dns.fullname" . }}
+      k8s-app: node-local-dns
   template:
     metadata:
       labels:
-        k8s-app: {{ include "node-local-dns.fullname" . }}
+        k8s-app: node-local-dns
     spec:
       priorityClassName: {{ .Values.priorityClassName }}
-      serviceAccountName: {{ include "node-local-dns.fullname" . }}
+      serviceAccountName: node-local-dns
       hostNetwork: {{ .Values.useHostNetwork }}
       dnsPolicy: Default  # Don't use cluster DNS.
       tolerations:
@@ -71,7 +71,7 @@ spec:
           optional: true
       - name: config-volume
         configMap:
-          name: {{ include "node-local-dns.fullname" . }}
+          name: node-local-dns
           items:
             - key: Corefile
               path: Corefile.base

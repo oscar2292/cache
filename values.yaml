@@ -1,12 +1,8 @@
-# Default values for nodelocaldns
 image:
   repository: k8s.gcr.io/dns/k8s-dns-node-cache
   tag: 1.17.0
   pullPolicy: IfNotPresent
-  ## It is possible to specify docker registry credentials
-  ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
-  # pullSecrets:
-  #    - name: regsecret
+
 
 localIp: "169.254.20.10"
 dnsDomain: "cluster.local"
