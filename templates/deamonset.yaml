@@ -26,7 +26,7 @@ spec:
       tolerations:
         {{- toYaml .Values.dnsCache.tolerations | nindent 8 }}
       containers:
-      - name: {{ .Values.name }}
+      - name: {{ .Values.dnsCache.name }}
         image: "{{ .Values.dnsCache.image.repository }}:{{ .Values.dnsCache.image.tag }}"
         resources:
           requests:
