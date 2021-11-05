@@ -1,4 +1,4 @@
-dns-cache:
+dnsCache:
   image:
     repository: k8s.gcr.io/dns/k8s-dns-node-cache
     tag: 1.17.0
