@@ -1,8 +1,8 @@
 node-local-dns-cache:
-  image:
-    repository: k8s.gcr.io/dns/k8s-dns-node-cache
-    tag: 1.17.0
-    pullPolicy: IfNotPresent
+image:
+  repository: k8s.gcr.io/dns/k8s-dns-node-cache
+  tag: 1.17.0
+  pullPolicy: IfNotPresent
 
 
   localIp: "169.254.20.10"
