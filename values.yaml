@@ -1,32 +1,32 @@
-image:
-  repository: k8s.gcr.io/dns/k8s-dns-node-cache
-  tag: 1.17.0
-  pullPolicy: IfNotPresent
+node-local-dns-cache:
+  image:
+    repository: k8s.gcr.io/dns/k8s-dns-node-cache
+    tag: 1.17.0
+    pullPolicy: IfNotPresent
 
 
-localIp: "169.254.20.10"
-dnsDomain: "cluster.local"
-dnsServer: "10.96.0.10"
+  localIp: "169.254.20.10"
+  dnsDomain: "cluster.local"
+  dnsServer: "10.96.0.10"
 
-useHostNetwork: true
+  useHostNetwork: true
 
-updateStrategy:
-  rollingUpdate:
-    maxUnavailable: 10%
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 10%
 
-priorityClassName: system-node-critical
+  priorityClassName: system-node-critical
 
-tolerations:
-  - key: CriticalAddonsOnly
-    operator: Exists
-  - effect: NoExecute
-    operator: Exists
-  - effect: NoSchedule
-    operator: Exists
+  tolerations:
+    - key: CriticalAddonsOnly
+      operator: Exists
+    - effect: NoExecute
+      operator: Exists
+    - effect: NoSchedule
+      operator: Exists
 
-securityContext:
-  privileged: true
+  securityContext:
+    privileged: true
 
-## Daemonset container name
-name: node-cache
+  name: node-cache
 
